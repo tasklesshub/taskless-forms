@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taskless Forms — Dynamic Lead Capture System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #070B14;
+    --surface:   #0D1117;
+    --surface2:  #111827;
+    --border:    rgba(255,255,255,0.07);
+    --text:      #F8FAFC;
+    --muted:     rgba(255,255,255,0.4);
+    --dimmer:    rgba(255,255,255,0.15);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  /* ─── Page shell ─── */
+  .page-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+  .page-header h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(1.4rem, 4vw, 2rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+  .page-header p {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  /* ─── Client switcher ─── */
+  .switcher {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+  }
+  .switcher button {
+    padding: 7px 16px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+  .switcher button.active, .switcher button:hover {
+    border-color: rgba(255,255,255,0.25);
+    color: #fff;
+    background: var(--surface2);
+  }
+  .switcher button.active {
+    font-weight: 500;
+  }
+
+  /* ─── Form wrapper ─── */
+  .form-outer {
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  /* ─── Form card ─── */
+  .tf-card {
+    background: var(--surface);
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    animation: fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(18px) scale(0.97); }
+    to   { opacity:1; transform:translateY(0) scale(1); }
+  }
+
+  /* ─── Header ─── */
+  .tf-header {
+    padding: 2rem 1.5rem 1.5rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .tf-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--header-grad);
+    pointer-events: none;
+  }
+  .tf-logo-img {
+    height: 48px;
+    object-fit: contain;
+    margin-bottom: 14px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .tf-logo-initial {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--btn-grad);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 14px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 20px; font-weight: 700; color: #fff;
+  }
+  .tf-biz-name {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .tf-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 20px; font-weight: 600;
+    color: #fff; line-height: 1.3;
+    margin-bottom: 5px;
+  }
+  .tf-subtitle {
+    font-size: 12px; color: var(--muted);
+  }
+
+  /* ─── Body ─── */
+  .tf-body {
+    padding: 1.5rem 1.25rem;
+  }
+
+  /* ─── Field ─── */
+  .tf-field { margin-bottom: 14px; }
+  .tf-label {
+    display: flex; gap: 3px;
+    font-size: 11px; font-weight: 500;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 6px; letter-spacing: 0.02em;
+  }
+  .tf-label .req { color: #ef4444; }
+
+  .tf-input, .tf-select, .tf-textarea {
+    width: 100%; padding: 11px 14px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: #fff; font-size: 14px;
+    font-family: inherit; outline: none;
+    transition: border-color 0.18s, background 0.18s;
+    -webkit-appearance: none;
+  }
+  .tf-input::placeholder, .tf-textarea::placeholder { color: var(--dimmer); }
+  .tf-input:focus, .tf-select:focus, .tf-textarea:focus {
+    border-color: var(--primary);
+    background: rgba(255,255,255,0.07);
+  }
+  .tf-input.error, .tf-select.error, .tf-textarea.error {
+    border-color: #ef4444;
+  }
+  .tf-select { cursor: pointer; }
+  .tf-textarea { min-height: 88px; resize: vertical; line-height: 1.55; }
+
+  .tf-err {
+    font-size: 11px; color: #ef4444;
+    margin-top: 5px; display: none;
+  }
+  .tf-err.visible { display: block; }
+
+  /* ─── Consent ─── */
+  .tf-consent {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 12px 14px; margin-bottom: 16px;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    transition: border-color 0.18s;
+  }
+  .tf-consent.error { border-color: #ef4444; }
+  .tf-consent input[type="checkbox"] {
+    margin-top: 2px; flex-shrink: 0;
+    accent-color: var(--primary);
+    width: 15px; height: 15px; cursor: pointer;
+  }
+  .tf-consent-text {
+    font-size: 12px; color: rgba(255,255,255,0.38);
+    line-height: 1.65;
+  }
+  .tf-consent-err {
+    font-size: 11px; color: #ef4444;
+    margin-top: -10px; margin-bottom: 12px;
+    display: none;
+  }
+  .tf-consent-err.visible { display: block; }
+
+  /* ─── Submit button ─── */
+  .tf-btn {
+    width: 100%; padding: 13px;
+    background: var(--btn-grad);
+    border: none; border-radius: 10px;
+    color: #fff; font-size: 14px; font-weight: 500;
+    font-family: inherit; cursor: pointer;
+    transition: opacity 0.18s, transform 0.12s;
+    letter-spacing: 0.01em;
+    position: relative; overflow: hidden;
+  }
+  .tf-btn:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+  .tf-btn:active:not(:disabled) { transform: scale(0.985); }
+  .tf-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ─── Spinner ─── */
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.65s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ─── Success ─── */
+  .tf-success {
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    animation: fadeUp 0.4s cubic-bezier(0.16,1,0.3,1);
+    display: none;
+  }
+  .tf-success.visible { display: block; }
+  .tf-success-icon {
+    width: 60px; height: 60px; border-radius: 50%;
+    background: var(--btn-grad);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1.25rem;
+    font-size: 24px; color: #fff;
+  }
+  .tf-success h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 18px; font-weight: 600;
+    color: #fff; margin-bottom: 8px;
+  }
+  .tf-success p {
+    font-size: 13px; color: var(--muted);
+    line-height: 1.65; max-width: 280px;
+    margin: 0 auto 1.75rem;
+  }
+  .tf-reset {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted); padding: 8px 22px;
+    border-radius: 8px; cursor: pointer;
+    font-size: 13px; font-family: inherit;
+    transition: border-color 0.18s, color 0.18s;
+  }
+  .tf-reset:hover { border-color: rgba(255,255,255,0.2); color: #fff; }
+
+  /* ─── Footer ─── */
+  .tf-footer {
+    text-align: center; padding: 10px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+  }
+  .tf-footer a {
+    color: rgba(255,255,255,0.18);
+    text-decoration: none;
+    transition: color 0.18s;
+  }
+  .tf-footer a:hover { color: rgba(255,255,255,0.4); }
+
+  /* ─── JSON viewer ─── */
+  .json-section {
+    max-width: 420px; margin: 2rem auto 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden;
+  }
+  .json-header {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px; font-weight: 500;
+    color: var(--muted); letter-spacing: 0.05em;
+    text-transform: uppercase;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .json-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
+  .json-body {
+    padding: 14px 16px;
+    font-family: 'Courier New', monospace;
+    font-size: 11px; line-height: 1.7;
+    color: rgba(255,255,255,0.55);
+    max-height: 220px; overflow-y: auto;
+    white-space: pre-wrap; word-break: break-all;
+  }
+  .json-body .key   { color: #7dd3fc; }
+  .json-body .str   { color: #86efac; }
+  .json-body .bool  { color: #c084fc; }
+  .json-body .null  { color: #fb923c; }
+
+  /* ─── Responsive ─── */
+  @media (max-width: 480px) {
+    body { padding: 1rem 0.75rem; }
+    .tf-header { padding: 1.5rem 1.25rem 1.25rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Taskless Forms</h1>
+  <p>Dynamic white-label lead capture — switch clients below to see live re-branding</p>
+</div>
+
+<!-- Client switcher -->
+<div class="switcher">
+  <button class="active" onclick="loadClient('ahmed')">Ahmed's Restaurant</button>
+  <button onclick="loadClient('sara')">Sara's Boutique</button>
+  <button onclick="loadClient('clinic')">Dr. Ali Clinic</button>
+</div>
+
+<div class="form-outer">
+  <!-- Form card -->
+  <div class="tf-card" id="tf-card">
+
+    <!-- Header -->
+    <div class="tf-header" id="tf-header">
+      <div id="tf-logo"></div>
+      <div class="tf-biz-name" id="tf-biz-name"></div>
+      <div class="tf-title" id="tf-title"></div>
+      <div class="tf-subtitle" id="tf-subtitle"></div>
+    </div>
+
+    <!-- Body — form -->
+    <div class="tf-body" id="tf-form-body">
+      <div id="tf-fields"></div>
+
+      <!-- Consent -->
+      <div class="tf-consent" id="tf-consent-box">
+        <input type="checkbox" id="tf-consent">
+        <label for="tf-consent" class="tf-consent-text">
+          I agree to be contacted and to the processing of my personal data
+          in accordance with the privacy policy.
+        </label>
+      </div>
+      <div class="tf-consent-err" id="tf-consent-err">You must agree to continue</div>
+
+      <!-- Submit -->
+      <button class="tf-btn" id="tf-submit" onclick="handleSubmit()">
+        <span id="tf-btn-text">Submit</span>
+      </button>
+    </div>
+
+    <!-- Success -->
+    <div class="tf-success" id="tf-success">
+      <div class="tf-success-icon">✓</div>
+      <h3>Request Received</h3>
+      <p id="tf-auto-reply"></p>
+      <button class="tf-reset" onclick="resetForm()">Submit another request</button>
+    </div>
+
+    <!-- Footer -->
+    <div class="tf-footer">
+      <a href="https://taskless.qa" target="_blank" rel="noopener">Powered by Taskless ⚡</a>
+    </div>
+
+  </div>
+
+  <!-- Live payload preview -->
+  <div class="json-section" id="json-section" style="display:none">
+    <div class="json-header">
+      <div class="json-dot"></div>
+      Live n8n Payload — what gets sent on submit
+    </div>
+    <div class="json-body" id="json-body"></div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════
+   CLIENT CONFIGS
+   In production: fetch from n8n API by slug.
+   Here: mock configs to demonstrate dynamic theming.
+════════════════════════════════════════════════ */
+const CONFIGS = {
+  ahmed: {
+    client_id:      'CL-001',
+    slug:           'ahmed-restaurant',
+    businessName:   "Ahmed's Restaurant",
+    logoText:       'AR',
+    logoUrl:        null,
+    primaryColor:   '#D4A017',
+    secondaryColor: '#E87B2B',
+    formTitle:      'Book Your Table',
+    formSubtitle:   'We confirm your reservation within 1 hour',
+    buttonText:     'Reserve Now',
+    autoReply:      "Thank you! Ahmed's team will confirm your table shortly.",
+    n8nWebhook:     'https://taskless.qa/webhook/form-submit',
+    fields: [
+      { id:'name',    label:'Full Name',        type:'text',     required:true,  placeholder:'Mohammed Al-Rashidi' },
+      { id:'phone',   label:'Phone Number',     type:'phone',    required:true,  placeholder:'+974 5555 1234' },
+      { id:'guests',  label:'Number of Guests', type:'dropdown', required:true,  options:['1','2','3','4','5','6+'] },
+      { id:'date',    label:'Preferred Date',   type:'date',     required:true  },
+      { id:'notes',   label:'Special Requests', type:'textarea', required:false, placeholder:'Allergies, celebrations, seating preferences…' },
+    ]
+  },
+  sara: {
+    client_id:      'CL-002',
+    slug:           'sara-boutique',
+    businessName:   "Sara's Boutique",
+    logoText:       'SB',
+    logoUrl:        null,
+    primaryColor:   '#C026D3',
+    secondaryColor: '#9333EA',
+    formTitle:      'Request a Styling Session',
+    formSubtitle:   'Personal shopping by appointment',
+    buttonText:     'Book Appointment',
+    autoReply:      "Hi! Sara will WhatsApp you within 2 hours to confirm your appointment.",
+    n8nWebhook:     'https://taskless.qa/webhook/form-submit',
+    fields: [
+      { id:'name',    label:'Your Name',          type:'text',     required:true,  placeholder:'Fatima Hassan' },
+      { id:'phone',   label:'WhatsApp Number',    type:'phone',    required:true,  placeholder:'+974 6666 7777' },
+      { id:'email',   label:'Email Address',      type:'email',    required:false, placeholder:'fatima@email.com' },
+      { id:'looking', label:'What are you looking for?', type:'dropdown', required:true,
+        options:['Casual wear','Office attire','Evening / formal','Occasion outfit','Full wardrobe refresh'] },
+      { id:'budget',  label:'Budget Range (QAR)', type:'dropdown', required:false,
+        options:['Under 500','500 – 1,500','1,500 – 5,000','5,000+'] },
+    ]
+  },
+  clinic: {
+    client_id:      'CL-003',
+    slug:           'dr-ali-clinic',
+    businessName:   'Dr. Ali Medical Clinic',
+    logoText:       'DA',
+    logoUrl:        null,
+    primaryColor:   '#0EA5E9',
+    secondaryColor: '#0D9488',
+    formTitle:      'Book a Consultation',
+    formSubtitle:   'Our team will confirm your appointment within 30 minutes',
+    buttonText:     'Request Appointment',
+    autoReply:      "Thank you. Our reception team will call you shortly to confirm your appointment time.",
+    n8nWebhook:     'https://taskless.qa/webhook/form-submit',
+    fields: [
+      { id:'name',      label:'Patient Name',        type:'text',     required:true,  placeholder:'Ahmed Al-Thani' },
+      { id:'phone',     label:'Phone Number',        type:'phone',    required:true,  placeholder:'+974 7777 8888' },
+      { id:'dob',       label:'Date of Birth',       type:'date',     required:true  },
+      { id:'specialty', label:'Consultation Type',   type:'dropdown', required:true,
+        options:['General Consultation','Follow-up Visit','Lab Results Review','Referral Consultation'] },
+      { id:'symptoms',  label:'Brief Description',   type:'textarea', required:false,
+        placeholder:'Briefly describe your concern or reason for visit…' },
+    ]
+  }
+};
+
+/* ════════════════════════════════════════════════
+   STATE
+════════════════════════════════════════════════ */
+let currentConfig = null;
+let formValues    = {};
+let submitted     = false;
+
+/* ════════════════════════════════════════════════
+   LOAD CLIENT — applies config to form
+════════════════════════════════════════════════ */
+function loadClient(key) {
+  const cfg = CONFIGS[key];
+  if (!cfg) return;
+  currentConfig = cfg;
+  formValues = {};
+  submitted = false;
+
+  // Update switcher buttons
+  document.querySelectorAll('.switcher button').forEach((b,i) => {
+    b.classList.toggle('active', Object.keys(CONFIGS)[i] === key);
+  });
+
+  // CSS vars for colors
+  const root = document.documentElement;
+  root.style.setProperty('--primary',    cfg.primaryColor);
+  root.style.setProperty('--secondary',  cfg.secondaryColor);
+  root.style.setProperty('--btn-grad',
+    `linear-gradient(135deg, ${cfg.primaryColor}, ${cfg.secondaryColor})`);
+  root.style.setProperty('--header-grad',
+    `linear-gradient(160deg, ${cfg.primaryColor}18, transparent 65%)`);
+
+  // Header
+  const logoEl = document.getElementById('tf-logo');
+  if (cfg.logoUrl) {
+    logoEl.innerHTML = `<img class="tf-logo-img" src="${cfg.logoUrl}" alt="${cfg.businessName}">`;
+  } else {
+    logoEl.innerHTML = `<div class="tf-logo-initial">${cfg.logoText}</div>`;
+  }
+  document.getElementById('tf-biz-name').textContent  = cfg.businessName;
+  document.getElementById('tf-title').textContent     = cfg.formTitle;
+  document.getElementById('tf-subtitle').textContent  = cfg.formSubtitle;
+  document.getElementById('tf-btn-text').textContent  = cfg.buttonText;
+
+  // Build fields
+  buildFields(cfg.fields);
+
+  // Reset states
+  document.getElementById('tf-form-body').style.display = 'block';
+  document.getElementById('tf-success').classList.remove('visible');
+  document.getElementById('tf-consent').checked = false;
+  document.getElementById('tf-consent-box').classList.remove('error');
+  document.getElementById('tf-consent-err').classList.remove('visible');
+  document.getElementById('tf-submit').disabled = false;
+  document.getElementById('tf-btn-text').textContent = cfg.buttonText;
+
+  // Re-animate card
+  const card = document.getElementById('tf-card');
+  card.style.animation = 'none';
+  card.offsetHeight; // force reflow
+  card.style.animation = '';
+
+  // Hide payload viewer
+  document.getElementById('json-section').style.display = 'none';
+}
+
+/* ════════════════════════════════════════════════
+   BUILD FIELDS
+════════════════════════════════════════════════ */
+function buildFields(fields) {
+  const container = document.getElementById('tf-fields');
+  container.innerHTML = '';
+  fields.forEach(f => {
+    const wrap  = document.createElement('div');
+    wrap.className = 'tf-field';
+    wrap.dataset.fieldId = f.id;
+
+    // Label
+    const label = document.createElement('div');
+    label.className = 'tf-label';
+    label.innerHTML = f.label + (f.required ? '<span class="req">*</span>' : '');
+
+    // Input
+    let inputEl;
+    if (f.type === 'dropdown') {
+      inputEl = document.createElement('select');
+      inputEl.className = 'tf-select';
+      inputEl.innerHTML = `<option value="" disabled selected>Select an option…</option>`;
+      (f.options || []).forEach(o => {
+        const opt = document.createElement('option');
+        opt.value = opt.textContent = o;
+        inputEl.appendChild(opt);
+      });
+    } else if (f.type === 'textarea') {
+      inputEl = document.createElement('textarea');
+      inputEl.className = 'tf-textarea';
+      inputEl.placeholder = f.placeholder || '';
+    } else {
+      inputEl = document.createElement('input');
+      inputEl.className = 'tf-input';
+      inputEl.type = f.type === 'phone' ? 'tel' : f.type;
+      inputEl.placeholder = f.placeholder || '';
+    }
+    inputEl.dataset.fieldId = f.id;
+    inputEl.dataset.required = f.required;
+    inputEl.dataset.type = f.type;
+
+    // Live update
+    inputEl.addEventListener('input', () => {
+      formValues[f.id] = inputEl.value;
+      clearError(f.id);
+      updatePayloadPreview();
+    });
+    inputEl.addEventListener('change', () => {
+      formValues[f.id] = inputEl.value;
+      clearError(f.id);
+      updatePayloadPreview();
+    });
+
+    // Error message
+    const errEl = document.createElement('div');
+    errEl.className = 'tf-err';
+    errEl.id = `err-${f.id}`;
+
+    wrap.appendChild(label);
+    wrap.appendChild(inputEl);
+    wrap.appendChild(errEl);
+    container.appendChild(wrap);
+  });
+}
+
+/* ════════════════════════════════════════════════
+   VALIDATION
+════════════════════════════════════════════════ */
+const validators = {
+  email(v) {
+    if (!v) return null;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? null : 'Enter a valid email address';
+  },
+  phone(v) {
+    if (!v) return null;
+    return /^\+?[\d\s\-()\\.]{7,20}$/.test(v) ? null : 'Enter a valid phone number';
+  },
+};
+
+function validateField(field, value) {
+  if (field.required && !value?.trim?.() && value !== 0) return 'This field is required';
+  const vfn = validators[field.type];
+  return vfn ? vfn(value) : null;
+}
+
+function showError(id, msg) {
+  const el = document.getElementById(`err-${id}`);
+  const inp = document.querySelector(`[data-field-id="${id}"]`);
+  if (el) { el.textContent = msg; el.classList.add('visible'); }
+  if (inp) inp.classList.add('error');
+}
+
+function clearError(id) {
+  const el = document.getElementById(`err-${id}`);
+  const inp = document.querySelector(`[data-field-id="${id}"]`);
+  if (el) el.classList.remove('visible');
+  if (inp) inp.classList.remove('error');
+}
+
+/* ════════════════════════════════════════════════
+   SUBMIT HANDLER
+════════════════════════════════════════════════ */
+async function handleSubmit() {
+  if (!currentConfig || submitted) return;
+
+  let hasError = false;
+
+  // Validate each field
+  currentConfig.fields.forEach(f => {
+    const value = formValues[f.id] || '';
+    const err   = validateField(f, value);
+    if (err) { showError(f.id, err); hasError = true; }
+  });
+
+  // Validate consent
+  const consent = document.getElementById('tf-consent').checked;
+  if (!consent) {
+    document.getElementById('tf-consent-box').classList.add('error');
+    document.getElementById('tf-consent-err').classList.add('visible');
+    hasError = true;
+  }
+
+  if (hasError) return;
+
+  // ── Build n8n payload ──────────────────────────────────────────────
+  const payload = {
+    client_id:  currentConfig.client_id,
+    slug:       currentConfig.slug,
+    timestamp:  new Date().toISOString(),
+    consent:    true,
+    form_data:  { ...formValues },
+    meta: {
+      source:  'taskless-forms',
+      version: '1.0.0',
+      locale:  navigator.language || 'en',
+    }
+  };
+  // ──────────────────────────────────────────────────────────────────
+
+  // Show loading
+  submitted = true;
+  const btn  = document.getElementById('tf-submit');
+  const btxt = document.getElementById('tf-btn-text');
+  btn.disabled = true;
+  btxt.innerHTML = '<span class="spinner"></span>Sending…';
+
+  // Show payload
+  showPayload(payload);
+
+  // Send to n8n (fire and forget — show success regardless for demo)
+  try {
+    await fetch(currentConfig.n8nWebhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  } catch (_) { /* demo: still show success */ }
+
+  // Transition to success
+  setTimeout(() => {
+    document.getElementById('tf-form-body').style.display = 'none';
+    const success = document.getElementById('tf-success');
+    document.getElementById('tf-auto-reply').textContent = currentConfig.autoReply;
+    success.classList.add('visible');
+  }, 800);
+}
+
+/* ════════════════════════════════════════════════
+   RESET
+════════════════════════════════════════════════ */
+function resetForm() {
+  submitted = false;
+  formValues = {};
+  document.getElementById('tf-success').classList.remove('visible');
+  document.getElementById('tf-form-body').style.display = 'block';
+  document.getElementById('tf-consent').checked = false;
+  document.getElementById('tf-consent-box').classList.remove('error');
+  document.getElementById('tf-consent-err').classList.remove('visible');
+  document.getElementById('tf-submit').disabled = false;
+  document.getElementById('tf-btn-text').textContent = currentConfig.buttonText;
+  buildFields(currentConfig.fields);
+  document.getElementById('json-section').style.display = 'none';
+}
+
+/* ════════════════════════════════════════════════
+   PAYLOAD PREVIEW — shows live JSON for n8n
+════════════════════════════════════════════════ */
+function updatePayloadPreview() { /* silent while filling */ }
+
+function showPayload(payload) {
+  const section = document.getElementById('json-section');
+  const body    = document.getElementById('json-body');
+  section.style.display = 'block';
+  body.innerHTML = syntaxHighlight(JSON.stringify(payload, null, 2));
+}
+
+function syntaxHighlight(json) {
+  return json
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/("(\\u[\dA-Fa-f]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, m => {
+      let cls = 'str';
+      if (/^"/.test(m)) { cls = /:$/.test(m) ? 'key' : 'str'; }
+      else if (/true|false/.test(m)) cls = 'bool';
+      else if (/null/.test(m)) cls = 'null';
+      return `<span class="${cls}">${m}</span>`;
+    });
+}
+
+/* ════════════════════════════════════════════════
+   BOOT
+════════════════════════════════════════════════ */
+loadClient('ahmed');
+</script>
+</body>
+</html>
